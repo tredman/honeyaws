@@ -8,6 +8,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/honeycombio/honeyaws/logbucket"
 	"github.com/honeycombio/honeyaws/options"
@@ -76,8 +77,27 @@ Your write key is available at https://ui.honeycomb.io/account`)
 				}
 			}
 
-			// Use this one publisher instance for all ObjectDownloadParsers.
-			stater := state.NewFileStater(opt.StateDir, logbucket.AWSElasticLoadBalancing)
+			var stater state.Stater
+
+			if opt.HighAvail {
+				svc := dynamodb.New(sess)
+				input := &dynamodb.DescribeTableInput{
+					TableName: aws.String("HoneyELBAccessLogBuckets"),
+				}
+				_, err := svc.DescribeTable(input)
+				if err != nil {
+					// For some reason, we cannot write to
+					// the table or access it
+					logrus.Fatal(`--high-availability requires an existing DynamoDB tabled named HoneyELBAccessLogBuckets, please refer to the README.`)
+				}
+
+				stater = state.NewDynamoDBStater(sess, logbucket.AWSElasticLoadBalancing)
+				logrus.Info("High availability enabled - using DynamoDB")
+
+			} else {
+				stater = state.NewFileStater(opt.StateDir, logbucket.AWSElasticLoadBalancing)
+			}
+
 			defaultPublisher := publisher.NewHoneycombPublisher(opt, stater, publisher.NewELBEventParser(opt.SampleRate))
 			downloadsCh := make(chan state.DownloadedObject)
 
@@ -123,6 +143,7 @@ http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer
 
 			signalCh := make(chan os.Signal)
 			signal.Notify(signalCh, os.Interrupt)
+
 			go func() {
 				<-signalCh
 				logrus.Fatal("Exiting due to interrupt.")

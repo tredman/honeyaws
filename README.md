@@ -56,6 +56,30 @@ $ honeyelb --writekey=<writekey> ingest foo-lb
 
 To ingest all LBs, use `honeyelb ingest` without any non-flag arguments.
 
+## High Availability
+
+There exists the option to run `honeycomb-aws` in a high availability
+environment. This is done using [DynamoDB](https://aws.amazon.com/dynamodb/)
+for management of processed log files. There are a few things that must be
+set up before running `high-availability`.
+
+First, a table must be created with the name `HoneyELBAccessLogBuckets` with a
+primary key named `s3object`. Conveniently, we provide you with a CloudFormation
+template to do just this!
+
+```
+$ aws cloudformation create-stack --stack-name DynamoDBHoneyELB \
+    --template-body file://cloudformation/dynamoDB.yml
+```
+
+Once this table is created, you can simply add the `--high-availability` flag to
+`honeyelb` or `honeycloudfront`.
+
+```
+$ honeyelb --high-availability --writekey=<writekey> ingest foo-lb
+```
+
+Now you can have multiple EC2 instances ingesting logs!
 
 ## Sampling
 
