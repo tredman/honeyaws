@@ -64,7 +64,7 @@ for management of processed log files. There are a few things that must be
 set up before running `high-availability`.
 
 First, a table must be created with the name `HoneyELBAccessLogBuckets` with a
-primary key named `s3object`. Conveniently, we provide you with a CloudFormation
+primary key named `S3object`. Conveniently, we provide you with a CloudFormation
 template to do just this!
 
 ```
