@@ -18,6 +18,7 @@ import (
 const (
 	AWSElasticLoadBalancerFormat = "aws_elb"
 	AWSCloudFrontWebFormat       = "aws_cf_web"
+	AWSCloudTrailFormat          = "aws_ct"
 )
 
 var (

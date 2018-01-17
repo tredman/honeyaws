@@ -6,7 +6,6 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudfront"
@@ -16,6 +15,7 @@ import (
 	"github.com/honeycombio/honeyaws/state"
 	libhoney "github.com/honeycombio/libhoney-go"
 	flag "github.com/jessevdk/go-flags"
+	"github.com/sirupsen/logrus"
 )
 
 var (
