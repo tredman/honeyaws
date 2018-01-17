@@ -86,8 +86,8 @@ func NewCloudTrailDownloader(sess *session.Session, bucketName, bucketPrefix, tr
 }
 
 func (d *CloudTrailDownloader) ObjectPrefix(day time.Time) string {
-	daypath := day.Format("2006/01/02")
-	return d.Prefix + "AWSLogs/" + d.AccountID + "/" + "CloudTrail/" + d.Region + "/" + dayPath + "/" + d.AccountID + "_" + CloudTrail + "_" + d.Region + "_" + dayPath
+	dayPath := day.Format("2006/01/02")
+	return d.Prefix + "AWSLogs/" + d.AccountID + "/" + "CloudTrail/" + d.Region + "/" + dayPath + "/" + d.AccountID + "_CloudTrail_" + d.Region + "_" + dayPath
 }
 
 func (d *CloudTrailDownloader) String() string {

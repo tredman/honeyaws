@@ -3,7 +3,7 @@ package publisher
 import (
 	"compress/gzip"
 	"encoding/json"
-	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/Sirupsen/logrus"
@@ -32,17 +32,10 @@ func NewCloudTrailEventParser(sampleRate int) *CloudTrailEventParser {
 }
 
 func (ep *CloudTrailEventParser) ParseEvents(obj state.DownloadedObject, out chan<- event.Event) error {
-	linesCh := make(chan string)
-	records := make([]map[string]interface{})
-
-	go np.ProcessLines(linesCh, out, nil)
+	linesCh := make(chan []map[string]interface{})
+	records := make([]map[string]interface{}, 0)
 
 	f, err := os.Open(obj.Filename)
-	if err != nil {
-		return err
-	}
-
-	fs, err := f.Stat()
 	if err != nil {
 		return err
 	}
@@ -54,8 +47,7 @@ func (ep *CloudTrailEventParser) ParseEvents(obj state.DownloadedObject, out cha
 		return err
 	}
 
-	fileBuf := make([]byte, fs.Size())
-	fileJson, err := io.ReadFull(r, fileBuf)
+	fileJson, err := ioutil.ReadAll(r)
 	json.Unmarshal(fileJson, &records)
 
 	linesCh <- records
@@ -65,6 +57,5 @@ func (ep *CloudTrailEventParser) ParseEvents(obj state.DownloadedObject, out cha
 	return nil
 }
 
-func (ep *CloudFrontEventParser) DynSample(in <-chan event.Event, out chan<- event.Event) {
-	return nil
+func (ep *CloudTrailEventParser) DynSample(in <-chan event.Event, out chan<- event.Event) {
 }

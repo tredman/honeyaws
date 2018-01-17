@@ -142,6 +142,11 @@
 			"Rev": "a42816b7219102ae19ac57b8737af5fbe1f90afb"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudtrail",
+			"Comment": "v1.10.15-3-ga42816b7",
+			"Rev": "a42816b7219102ae19ac57b8737af5fbe1f90afb"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/dynamodb",
 			"Comment": "v1.10.15-3-ga42816b7",
 			"Rev": "a42816b7219102ae19ac57b8737af5fbe1f90afb"
@@ -204,19 +209,19 @@
 		},
 		{
 			"ImportPath": "github.com/honeycombio/honeytail/event",
-			"Rev": "f672d08ef086c809b617601c62dd6da5585f2722"
+			"Rev": "17f2f57fe78512d1e1a8efaea76a6be84f420679"
 		},
 		{
 			"ImportPath": "github.com/honeycombio/honeytail/httime",
-			"Rev": "f672d08ef086c809b617601c62dd6da5585f2722"
+			"Rev": "17f2f57fe78512d1e1a8efaea76a6be84f420679"
 		},
 		{
 			"ImportPath": "github.com/honeycombio/honeytail/parsers",
-			"Rev": "f672d08ef086c809b617601c62dd6da5585f2722"
+			"Rev": "17f2f57fe78512d1e1a8efaea76a6be84f420679"
 		},
 		{
 			"ImportPath": "github.com/honeycombio/honeytail/parsers/nginx",
-			"Rev": "f672d08ef086c809b617601c62dd6da5585f2722"
+			"Rev": "17f2f57fe78512d1e1a8efaea76a6be84f420679"
 		},
 		{
 			"ImportPath": "github.com/honeycombio/libhoney-go",

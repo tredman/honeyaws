@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
+	"reflect"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,6 +16,7 @@ import (
 	"github.com/honeycombio/honeyaws/publisher"
 	"github.com/honeycombio/honeyaws/state"
 	libhoney "github.com/honeycombio/libhoney-go"
+	flag "github.com/jessevdk/go-flags"
 )
 
 var (
@@ -23,6 +24,22 @@ var (
 	BuildID    string
 	versionStr string
 )
+
+// checks to see if struct contains a field
+// Trail type will not contain certain fields we want to check
+// such as S3KeyPrefix and S3BucketName if they are not set
+// causing a panic
+func nilField(v interface{}, name string) bool {
+	value := reflect.ValueOf(v)
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+	}
+	if value.Kind() != reflect.Struct {
+		return false
+	}
+
+	return value.FieldByName(name).IsNil()
+}
 
 func init() {
 	// set the version string to our desired format
@@ -48,11 +65,16 @@ func cmdCloudTrail(args []string) error {
 
 	listTrailsResp, err := cloudtrailSvc.DescribeTrails(&cloudtrail.DescribeTrailsInput{})
 
+	if err != nil {
+		return err
+		os.Exit(1)
+	}
+
 	if len(args) > 0 {
 		switch args[0] {
 		case "ls", "list":
-			for _, trailSummary := range listTrailsResp.DescribeTrails.TrailList {
-				fmt.Println(*trailSummary.TrailARN)
+			for _, trailSummary := range listTrailsResp.TrailList {
+				fmt.Println(*trailSummary.Name)
 			}
 			return nil
 
@@ -65,8 +87,8 @@ Your write key is available at https://ui.honeycomb.io/account`)
 			trailNames := args[1:]
 
 			if len(trailNames) == 0 {
-				for _, trail := range listTrailsResp.DescribeTrails.TrailList {
-					trailNames.append(trailNames, *trail.Name)
+				for _, trail := range listTrailsResp.TrailList {
+					trailNames = append(trailNames, *trail.Name)
 				}
 			}
 
@@ -103,21 +125,31 @@ Your write key is available at https://ui.honeycomb.io/account`)
 			defaultPublisher := publisher.NewHoneycombPublisher(opt, stater, publisher.NewCloudTrailEventParser(opt.SampleRate))
 
 			for _, trail := range trailListResp.TrailList {
-				if strings.Compare(trail.S3Bucket, "") == 0 {
+
+				var prefix string
+				if nilField(trail, "S3BucketName") {
+
 					fmt.Fprintf(os.Stderr, `%q does not currently have an S3 bucket that it is writing logs to. Please enable them to use the ingest tool. 
 
 For reference see this link:
-https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-and-update-a-trail.html `, trail.Name)
+https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-and-update-a-trail.html `, *trail.Name)
 
 					os.Exit(1)
 				}
-				bucket := trail.S3Bucket
 				logrus.WithFields(logrus.Fields{
-					"bucket": bucket,
-					"name":   name,
+					"name":   *trail.Name,
+					"prefix": nilField(trail, "S3KeyPrefix"),
 				}).Info("Access logs are enabled for CloudTrail trails")
 
-				cloudtrailDownloader := logbucket.NewCloudTrailDownloader(bucket, trail.prefix, trail.Name)
+				if nilField(trail, "S3KeyPrefix") {
+					prefix = ""
+				} else {
+					prefix = *trail.S3KeyPrefix
+				}
+
+				bucket := *trail.S3BucketName
+
+				cloudtrailDownloader := logbucket.NewCloudTrailDownloader(sess, bucket, prefix, *trail.Name)
 				downloader := logbucket.NewDownloader(sess, stater, cloudtrailDownloader)
 				go downloader.Download(downloadsCh)
 			}
@@ -140,10 +172,7 @@ https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-and
 
 	}
 
-	if err != nil {
-		return err
-		os.Exit(1)
-	}
+	return fmt.Errorf("Subcommand %q not recognized", args[0])
 }
 
 func main() {
